@@ -25,15 +25,10 @@ CREATE TABLE Compras(
     DataCompra DATE NOT NULL DEFAULT GETDATE()
 );
 
-CREATE TABLE CompraItens(
-    idCompraItem INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    idCompra INT NOT NULL,
-    idItemCompra INT NOT NULL
-);
-
 CREATE TABLE ItensCompras(
     idItemCompra INT NOT NULL PRIMARY KEY IDENTITY(1,1),
     idPrincipioAtivo INT NOT NULL,
+    idCompra INT NOT NULL,
     Quantidade INT NOT NULL,
     ValorUnitario DECIMAL(6,2)
 );
@@ -55,15 +50,11 @@ CREATE TABLE Producoes(
     Quantidade INT NOT NULL
 ); 
 
-CREATE TABLE ProducoesItens(
-    idProducaoItem INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    idProducao INT NOT NULL,
-    idItemProducao INT NOT NULL
-);
 
 CREATE TABLE ItensProducoes(
     idItemProducao INT NOT NULL PRIMARY KEY IDENTITY(1,1),
     idPrincipioAtivo INT NOT NULL,
+    idProducao INT NOT NULL,
     QuantidadePrincipios INT NOT NULL 
 );
 
@@ -86,15 +77,11 @@ CREATE TABLE VendasMedicamentos(
     DataVenda DATE NOT NULL DEFAULT GETDATE()
 );
 
-CREATE TABLE VendaItens(
-    idVendaItem INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    idVenda INT NOT NULL,
-    idItemVenda INT NOT NULL
-);
 
 CREATE TABLE ItensVendas(
     idItemVenda INT NOT NULL PRIMARY KEY IDENTITY(1,1),
     idMedicamento INT NOT NULL,
+    idVenda INT NOT NULL,
     Quantidade INT NOT NULL
 );
 
@@ -128,41 +115,32 @@ DEFAULT GETDATE() for DataProducao
 ALTER TABLE ItensCompras
 ADD FOREIGN KEY (idPrincipioAtivo) REFERENCES PrincipiosAtivos(idPrincipioAtivo);
 
+ALTER TABLE ItensCompras
+ADD FOREIGN KEY (idCompra) REFERENCES Compras(idCompra);
+
 ALTER TABLE FornecedoresBloqueados
 ADD FOREIGN KEY (idFornecedor) REFERENCES Fornecedores(idFornecedor);
 
 ALTER TABLE Compras
 ADD FOREIGN KEY (idFornecedor) REFERENCES Fornecedores(idFornecedor);
 
-ALTER TABLE CompraItens
-ADD FOREIGN KEY (idCompra) REFERENCES Compras(idCompra);
-
-ALTER TABLE CompraItens
-ADD FOREIGN KEY (idItemCompra) REFERENCES ItensCompras(idItemCompra);
-
 ALTER TABLE Producoes
 ADD FOREIGN KEY (idMedicamento) REFERENCES Medicamentos(idMedicamento);
-
-ALTER TABLE ProducoesItens
-ADD FOREIGN KEY (idItemProducao) REFERENCES ItensProducoes(idItemProducao);
-
-ALTER TABLE ProducoesItens
-ADD FOREIGN KEY (idProducao) REFERENCES Producoes(idProducao);
 
 ALTER TABLE ItensProducoes
 ADD FOREIGN KEY(idPrincipioAtivo) REFERENCES PrincipiosAtivos(idPrincipioAtivo);
 
+ALTER TABLE ItensProducoes
+ADD FOREIGN KEY(idProducao) REFERENCES Producoes(idProducao);
+
 ALTER TABLE VendasMedicamentos
 ADD FOREIGN KEY (idCliente) REFERENCES Clientes(idCliente);
 
-ALTER TABLE VendaItens
-ADD FOREIGN KEY (idVenda) REFERENCES VendasMedicamentos(idVenda);
-
-ALTER TABLE VendaItens
-ADD FOREIGN KEY (idItemVenda) REFERENCES ItensVendas(idItemVenda);
-
 ALTER TABLE ItensVendas
 ADD FOREIGN KEY (idMedicamento) REFERENCES Medicamentos(idMedicamento);
+
+ALTER TABLE ItensVendas
+ADD FOREIGN KEY (idVenda) REFERENCES VendasMedicamentos(idVenda);
 
 ALTER TABLE ClientesRestritos
 ADD FOREIGN KEY (idCliente) REFERENCES Clientes(idCliente);
@@ -199,37 +177,28 @@ INSERT INTO Compras(idFornecedor) VALUES
 (1),
 (2);
 
-INSERT INTO ItensCompras(Quantidade, ValorUnitario, idPrincipioAtivo) VALUES
-(2, 10.90, 1),
-(3, 22.00, 2);
+INSERT INTO ItensCompras(Quantidade, ValorUnitario, idPrincipioAtivo, idCompra) VALUES
+(2, 10.90, 1, 1),
+(3, 22.00, 2, 2);
 
-INSERT INTO CompraItens(idCompra, idItemCompra) VALUES 
-(1, 1),
-(2, 2);
 
 INSERT INTO Producoes(idMedicamento, Quantidade) VALUES 
 (1, 5),
 (2, 6);
 
-INSERT INTO ItensProducoes(idPrincipioAtivo, QuantidadePrincipios) VALUES
-(1, 5),
-(2, 6);
+INSERT INTO ItensProducoes(idPrincipioAtivo, QuantidadePrincipios, idProducao) VALUES
+(1, 5, 1),
+(2, 6, 2);
 
-INSERT INTO ProducoesItens(idProducao, idItemProducao) VALUES
-(1,1),
-(2,2);
 
 INSERT INTO VendasMedicamentos(idCliente) VALUES
 (1),
 (2);
 
-INSERT INTO ItensVendas(idMedicamento, Quantidade) VALUES
-(1, 3),
-(2, 4);
+INSERT INTO ItensVendas(idMedicamento, Quantidade, idVenda) VALUES
+(1, 3, 1),
+(2, 4, 2);
 
-INSERT INTO VendaItens(idVenda, idItemVenda) VALUES
-(1,1),
-(2,2);
 
 INSERT INTO ClientesRestritos(idCliente) 
 VALUES (3);
@@ -254,13 +223,10 @@ SELECT * FROM Clientes
 SELECT * FROM FornecedoresBloqueados
 SELECT * FROM Compras
 SELECT * FROM ItensCompras
-SELECT * FROM CompraItens
 SELECT * FROM Producoes
 SELECT * FROM ItensProducoes
-SELECT * FROM ProducoesItens
 SELECT * FROM VendasMedicamentos
 SELECT * FROM ItensVendas
-SELECT * FROM VendaItens
 SELECT * FROM ClientesRestritos
 SELECT * FROM Telefones
 GO
@@ -317,36 +283,29 @@ ON Compras
 FOR INSERT
 AS
 BEGIN
-    DECLARE
-        @idFornecedor INT,
-        @Situacao CHAR(1)
-
-    SELECT @idFornecedor = idFornecedor FROM inserted;
-
-    SELECT @Situacao = Situacao
-    FROM Fornecedores
-    WHERE idFornecedor = @idFornecedor
-
-    IF(@Situacao = 'I')
-    BEGIN 
+   IF EXISTS(
+       SELECT 1
+       FROM inserted c
+       JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor
+       WHERE f.Situacao = 'I'
+   )
+   BEGIN 
         RAISERROR('Fornecedor inativo não pode vender!', 16, 1);
         ROLLBACK TRANSACTION;
     END
 END;
 GO
 
+
 CREATE TRIGGER TGR_VerificarFornecedorBloqueadoCompra
 ON Compras
 FOR INSERT
 AS 
 BEGIN
-    DECLARE @idFornecedor INT;
-    SELECT @idFornecedor = idFornecedor FROM inserted;
-
     IF EXISTS(
         SELECT 1
-        FROM FornecedoresBloqueados
-        WHERE idFornecedor = @idFornecedor
+        FROM inserted c
+        JOIN FornecedoresBloqueados fb ON fb.idFornecedor = c.idFornecedor
         )
         BEGIN
            RAISERROR('Fornecedor bloqueado não pode vender!', 16, 1);
@@ -363,8 +322,7 @@ BEGIN
     IF EXISTS(
         SELECT 1
         FROM inserted p
-        JOIN ProducoesItens pi ON pi.idProducao = p.idProducao
-        JOIN ItensProducoes ip ON ip.idItemProducao = pi.idItemProducao
+        JOIN ItensProducoes ip ON ip.idProducao = p.idProducao
         JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ip.idPrincipioAtivo
         WHERE pa.Situacao = 'I'
     )
@@ -376,20 +334,18 @@ END;
 GO
 
 CREATE TRIGGER TRG_VerificarMedicamentoAtivoVenda
-ON VendasMedicamentos
+ON ItensVendas
 FOR INSERT 
 AS 
 BEGIN
     IF EXISTS(
         SELECT 1
-        FROM inserted v
-        JOIN VendaItens vi ON vi.idVenda = v.idVenda
-        JOIN ItensVendas iv ON iv.idItemVenda = vi.idItemVenda
+        FROM inserted iv
         JOIN Medicamentos m ON m.idMedicamento = iv.idMedicamento
         WHERE m.Situacao = 'I'
     )
     BEGIN 
-        RAISERROR('Não é possível realizar a compra desse medicamento, está inativo!', 16, 1)
+        RAISERROR('Não é possível adicionar o medicamento a tabela de itens de vendas, pois está inativo!', 16, 1)
         ROLLBACK TRANSACTION;
     END
 END;
@@ -406,15 +362,6 @@ GO
 
 CREATE TRIGGER TRG_BloquearDeleteCompras
 ON Compras 
-INSTEAD OF DELETE
-AS
-BEGIN
-    RAISERROR('Não é permititido excluir registros dessa tabela!', 16, 1);
-END;
-GO
-
-CREATE TRIGGER TRG_BloquearDeleteCompraItens
-ON  CompraItens
 INSTEAD OF DELETE
 AS
 BEGIN
@@ -449,14 +396,6 @@ BEGIN
 END;
 GO
 
-CREATE TRIGGER TRG_BloquearDeleteProducoesItens
-ON ProducoesItens  
-INSTEAD OF DELETE
-AS
-BEGIN
-    RAISERROR('Não é permititido excluir registros dessa tabela!', 16, 1);
-END;
-GO
 
 CREATE TRIGGER TRG_BloquearDeleteItensProducoes
 ON ItensProducoes
@@ -478,15 +417,6 @@ GO
 
 CREATE TRIGGER TRG_BloquearDeleteVendasMedicamentos
 ON VendasMedicamentos
-INSTEAD OF DELETE
-AS
-BEGIN
-    RAISERROR('Não é permititido excluir registros dessa tabela!', 16, 1);
-END;
-GO
-
-CREATE TRIGGER TRG_BloquearDeleteVendaItens
-ON VendaItens 
 INSTEAD OF DELETE
 AS
 BEGIN
@@ -521,3 +451,61 @@ BEGIN
 END;
 GO
 
+CREATE TRIGGER TRG_QuantidadeItensCompras
+ON ItensCompras
+FOR INSERT 
+AS
+BEGIN
+    IF EXISTS(
+        SELECT 1 
+        FROM ItensCompras ic
+        JOIN inserted i ON i.idCompra = ic.idCompra
+        GROUP BY ic.idCompra
+        HAVING COUNT (ic.idItemCompra) > 3
+    )
+    BEGIN 
+        RAISERROR ('Não é possível adicionar mais de 3 itens à sua compra!', 16, 1)
+        ROLLBACK TRANSACTION;
+    END 
+END;
+GO
+
+CREATE TRIGGER TRG_QuantidadeItensVenda
+ON ItensVendas
+FOR INSERT 
+AS
+BEGIN
+    IF EXISTS(
+        SELECT 1 
+        FROM ItensVendas iv
+        JOIN inserted i ON i.idVenda = iv.idVenda
+        GROUP BY iv.idVenda
+        HAVING COUNT (iv.idVenda) > 3
+    )
+    BEGIN 
+        RAISERROR ('Não é possível adicionar mais de 3 itens à sua venda!', 16, 1)
+        ROLLBACK TRANSACTION;
+    END 
+END;
+GO
+
+CREATE TRIGGER TRG_VerificarItemProducao
+ON ItensVendas
+FOR INSERT 
+AS 
+BEGIN
+    IF EXISTS(
+        SELECT 1
+        FROM inserted iv
+        WHERE NOT EXISTS(
+            SELECT 1 
+            FROM Producoes p
+            WHERE p.idMedicamento = iv.idMedicamento
+        )
+    )
+    BEGIN
+        RAISERROR('Não é possível vender medicamento não produzido ainda!', 16, 1);
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
