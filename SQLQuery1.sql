@@ -210,7 +210,7 @@ INSERT INTO Telefones (idCliente, DDD, Numero) VALUES
 
 -----------------------------------------UPDATES------------------------------------------------
 UPDATE Clientes
-SET Situacao = 'I'
+SET Situacao = 'A'
 WHERE IdCliente = 2;
 GO 
 ------------------------------------------------------------------------------------------------
@@ -229,12 +229,38 @@ SELECT * FROM VendasMedicamentos
 SELECT * FROM ItensVendas
 SELECT * FROM ClientesRestritos
 SELECT * FROM Telefones
+
+SELECT c.idCompra, c.DataCompra,f.RazaoSocial,f.Situacao
+FROM Compras c
+JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor;
+
+SELECT c.idCompra, ic.idItemCompra, ic.Quantidade, ic.ValorUnitario 
+FROM ItensCompras ic
+JOIN Compras c ON c.idCompra = ic.idCompra;
+
+SELECT p.idProducao, pa.Nome, ip.QuantidadePrincipios
+FROM ItensProducoes ip
+JOIN Producoes p ON p.idProducao = ip.idProducao
+JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ip.idPrincipioAtivo;
+
+SELECT vm.idVenda, c.Nome, c.CPF, c.Situacao, vm.DataVenda
+FROM VendasMedicamentos vm
+JOIN Clientes c ON c.idCliente = vm.idCliente;
+
+SELECT c.Nome, t.DDD, t.Numero
+FROM Clientes c 
+RIGHT JOIN Telefones t ON t.idCliente = c.idCliente;
+
+SELECT vm.idVenda, m.Nome, iv.Quantidade, m.ValorVenda,(iv.Quantidade * m.ValorVenda) AS Total
+FROM ItensVendas iv
+JOIN VendasMedicamentos vm ON vm.idVenda = iv.idVenda
+JOIN Medicamentos m ON m.idMedicamento = iv.idMedicamento;
+
+
 GO
 ------------------------------------------------------------------------------------------------
 ------------------------------------------TRIGGERS----------------------------------------------
 ------------------------------------------------------------------------------------------------
-
-
 CREATE TRIGGER TRG_VerificarClienteVenda
 ON VendasMedicamentos
 FOR INSERT
@@ -257,6 +283,8 @@ BEGIN
     END
 END;
 GO
+
+
 
 CREATE TRIGGER TGR_VerificarClienteRestritoVenda
 ON VendasMedicamentos
