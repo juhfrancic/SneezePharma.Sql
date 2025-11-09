@@ -509,3 +509,39 @@ BEGIN
     END
 END;
 GO
+
+CREATE TRIGGER TRG_VerificarClienteMaiorDeIdade
+ON VendasMedicamentos
+FOR INSERT
+AS
+BEGIN
+    IF EXISTS(
+        SELECT 1 
+        FROM inserted vm
+        JOIN Clientes c ON c.idCliente = vm.idCliente
+        WHERE c.DataNascimento < DATEADD(year, -18, vm.DataVenda)
+    )
+    BEGIN 
+        RAISERROR('Clientes menores de 18 anos não podem realizar compras de medicamentos!', 16, 1)
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
+
+CREATE TRIGGER TRG_VerificarFornecedorDoisAnos
+ON Compras
+FOR INSERT
+AS
+BEGIN
+    IF EXISTS(
+        SELECT 1 
+        FROM inserted c
+        JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor
+        WHERE f.DataAbertura < DATEADD(year, -2, c.DataCompra)
+    )
+    BEGIN 
+        RAISERROR('Fornecedores que estão abertos a menos de 2 anos não podem realizar vendas!', 16, 1)
+        ROLLBACK TRANSACTION;
+    END
+END;
+GO
