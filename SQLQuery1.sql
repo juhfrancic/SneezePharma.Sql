@@ -230,11 +230,11 @@ SELECT * FROM ItensVendas
 SELECT * FROM ClientesRestritos
 SELECT * FROM Telefones
 
-SELECT c.idCompra, c.DataCompra,f.RazaoSocial,f.Situacao
+SELECT c.idCompra, c.DataCompra,f.RazaoSocial,f.Situacao 
 FROM Compras c
 JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor;
 
-SELECT c.idCompra, ic.idItemCompra, ic.Quantidade, ic.ValorUnitario 
+SELECT c.idCompra, ic.idItemCompra, ic.Quantidade, ic.ValorUnitario, (ic.Quantidade * ic.ValorUnitario) AS Total
 FROM ItensCompras ic
 JOIN Compras c ON c.idCompra = ic.idCompra;
 
@@ -256,6 +256,13 @@ FROM ItensVendas iv
 JOIN VendasMedicamentos vm ON vm.idVenda = iv.idVenda
 JOIN Medicamentos m ON m.idMedicamento = iv.idMedicamento;
 
+SELECT c.CPF
+FROM Clientes c
+JOIN ClientesRestritos cr ON cr.idCliente = c.idCliente;
+
+SELECT f.CNPJ
+FROM Fornecedores f
+JOIN FornecedoresBloqueados fb ON fb.idFornecedor = f.idFornecedor;
 
 GO
 ------------------------------------------------------------------------------------------------
