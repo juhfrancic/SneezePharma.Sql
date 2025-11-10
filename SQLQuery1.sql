@@ -230,10 +230,6 @@ SELECT * FROM ItensVendas
 SELECT * FROM ClientesRestritos
 SELECT * FROM Telefones
 
-SELECT c.idCompra, c.DataCompra,f.RazaoSocial,f.Situacao 
-FROM Compras c
-JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor;
-
 SELECT c.idCompra, ic.idItemCompra, ic.Quantidade, ic.ValorUnitario, (ic.Quantidade * ic.ValorUnitario) AS Total
 FROM ItensCompras ic
 JOIN Compras c ON c.idCompra = ic.idCompra;
@@ -264,6 +260,23 @@ SELECT f.CNPJ
 FROM Fornecedores f
 JOIN FornecedoresBloqueados fb ON fb.idFornecedor = f.idFornecedor;
 
+--Relatório de vendas por período
+SELECT *
+FROM VendasMedicamentos
+WHERE DataVenda BETWEEN '2025-11-01' AND '2025-11-10';
+
+
+--Relatório de medicamentos mais vendidos
+SELECT m.Nome, SUM(iv.Quantidade) AS Quantidade
+FROM ItensVendas iv
+JOIN Medicamentos m ON iv.idMedicamento = m.idMedicamento
+GROUP BY m.Nome
+ORDER BY SUM(iv.Quantidade) DESC;
+
+--Relatório de compras por fornecedor
+SELECT c.idCompra, c.DataCompra,f.RazaoSocial
+FROM Compras c
+JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor;
 GO
 ------------------------------------------------------------------------------------------------
 ------------------------------------------TRIGGERS----------------------------------------------
@@ -290,8 +303,6 @@ BEGIN
     END
 END;
 GO
-
-
 
 CREATE TRIGGER TGR_VerificarClienteRestritoVenda
 ON VendasMedicamentos
@@ -554,7 +565,7 @@ BEGIN
         SELECT 1 
         FROM inserted vm
         JOIN Clientes c ON c.idCliente = vm.idCliente
-        WHERE c.DataNascimento < DATEADD(year, -18, vm.DataVenda)
+        WHERE c.DataNascimento > DATEADD(year, -18, vm.DataVenda)
     )
     BEGIN 
         RAISERROR('Clientes menores de 18 anos não podem realizar compras de medicamentos!', 16, 1)
@@ -562,6 +573,7 @@ BEGIN
     END
 END;
 GO
+
 
 CREATE TRIGGER TRG_VerificarFornecedorDoisAnos
 ON Compras
