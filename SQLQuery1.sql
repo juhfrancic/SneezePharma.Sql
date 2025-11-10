@@ -152,7 +152,8 @@ ADD FOREIGN KEY (idCliente) REFERENCES Clientes(idCliente);
 INSERT INTO Fornecedores (Cnpj, RazaoSocial, Pais, DataAbertura) VALUES
 ('12345678998765', 'Empresa A', 'Brasil', '2010-07-09'),
 ('98765432112345', 'Empresa B', 'Estados Unidos', '2002-08-22'),
-('45678976543120', 'Empresa C', 'México', '2006-02-04');
+('45678976543120', 'Empresa C', 'México', '2006-02-04'),
+('45678976543122', 'Empresa D', 'Japão', '2016-04-04');
 
 INSERT INTO PrincipiosAtivos(Principio, Nome) VALUES
 ('123456', 'Paracetamol'),
@@ -163,6 +164,8 @@ INSERT INTO Medicamentos(Categoria, CDB, Nome, ValorVenda) VALUES
 ('A','1234567890987', 'Paracetamol', 45.00),
 ('A','0987654321234', 'Dipirona', 20.50),
 ('I','8765433456789', 'Ibuprofeno', 36.99);
+INSERT INTO Medicamentos(Categoria, CDB, Nome, ValorVenda) VALUES
+('A','1234567890864', 'Nimesulida', '22.50');
 
 INSERT INTO Clientes(CPF, Nome, DataNascimento) VALUES
 ('12345678912', 'Julia Tostes', '2004-08-27'),
@@ -172,33 +175,37 @@ INSERT INTO Clientes(CPF, Nome, DataNascimento) VALUES
 
 INSERT INTO FornecedoresBloqueados(idFornecedor)
 VALUES (3);
+DELETE FROM FornecedoresBloqueados;
 
 INSERT INTO Compras(idFornecedor) VALUES
 (1),
-(2);
+(2),
+(3);
 
 INSERT INTO ItensCompras(Quantidade, ValorUnitario, idPrincipioAtivo, idCompra) VALUES
 (2, 10.90, 1, 1),
-(3, 22.00, 2, 2);
+(3, 22.00, 2, 2),
+(3, 26.00, 3, 5);
 
 
 INSERT INTO Producoes(idMedicamento, Quantidade) VALUES 
 (1, 5),
-(2, 6);
+(2, 6),
+(3, 6);
 
 INSERT INTO ItensProducoes(idPrincipioAtivo, QuantidadePrincipios, idProducao) VALUES
 (1, 5, 1),
 (2, 6, 2);
 
-
 INSERT INTO VendasMedicamentos(idCliente) VALUES
 (1),
-(2);
+(2),
+(4);
 
 INSERT INTO ItensVendas(idMedicamento, Quantidade, idVenda) VALUES
 (1, 3, 1),
-(2, 4, 2);
-
+(2, 4, 2),
+(3, 2, 1004);
 
 INSERT INTO ClientesRestritos(idCliente) 
 VALUES (3);
@@ -360,6 +367,7 @@ BEGIN
 END;
 GO
 
+
 CREATE TRIGGER TRG_ValidarPrincipioAtivoProducao
 ON Producoes
 FOR INSERT
@@ -470,6 +478,7 @@ BEGIN
 END;
 GO
 
+
 CREATE TRIGGER TRG_BloquearDeleteItensVendas
 ON ItensVendas
 INSTEAD OF DELETE
@@ -478,6 +487,7 @@ BEGIN
     RAISERROR('Não é permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
+
 
 CREATE TRIGGER TRG_BloquearDeleteClientes
 ON Clientes
@@ -518,15 +528,15 @@ GO
 
 CREATE TRIGGER TRG_QuantidadeItensVenda
 ON ItensVendas
-FOR INSERT 
+FOR INSERT
 AS
 BEGIN
-    IF EXISTS(
-        SELECT 1 
+    IF EXISTS (
+        SELECT iv.idVenda
         FROM ItensVendas iv
-        JOIN inserted i ON i.idVenda = iv.idVenda
+        WHERE iv.idVenda IN (SELECT idVenda FROM inserted)
         GROUP BY iv.idVenda
-        HAVING COUNT (iv.idVenda) > 3
+        HAVING COUNT(iv.idItemVenda) > 3
     )
     BEGIN 
         RAISERROR ('Não é possível adicionar mais de 3 itens à sua venda!', 16, 1)
@@ -534,6 +544,7 @@ BEGIN
     END 
 END;
 GO
+
 
 CREATE TRIGGER TRG_VerificarItemProducao
 ON ItensVendas
@@ -574,7 +585,6 @@ BEGIN
 END;
 GO
 
-
 CREATE TRIGGER TRG_VerificarFornecedorDoisAnos
 ON Compras
 FOR INSERT
@@ -584,7 +594,7 @@ BEGIN
         SELECT 1 
         FROM inserted c
         JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor
-        WHERE f.DataAbertura < DATEADD(year, -2, c.DataCompra)
+        WHERE f.DataAbertura >= DATEADD(year, -2, c.DataCompra)
     )
     BEGIN 
         RAISERROR('Fornecedores que estão abertos a menos de 2 anos não podem realizar vendas!', 16, 1)
@@ -592,3 +602,4 @@ BEGIN
     END
 END;
 GO
+
