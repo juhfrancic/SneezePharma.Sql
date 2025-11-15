@@ -60,7 +60,7 @@ CREATE TABLE ItensProducoes(
 
 CREATE TABLE Medicamentos(
     idMedicamento INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    Categoria CHAR(1)  -- A = AnalgÈsico, B = AntibiÛtico, I = Anti-inflamatÛrio, V = Vitamina
+    Categoria CHAR(1)  -- A = Analg√©sico, B = Antibi√≥tico, I = Anti-inflamat√≥rio, V = Vitamina
         CHECK(Categoria IN('A', 'B', 'I', 'V')),
     CDB CHAR(13) NOT NULL UNIQUE,
     Nome NVARCHAR(40) NOT NULL,
@@ -153,8 +153,8 @@ ADD FOREIGN KEY (idCliente) REFERENCES Clientes(idCliente);
 INSERT INTO Fornecedores (Cnpj, RazaoSocial, Pais, DataAbertura) VALUES
 ('12345678998765', 'Empresa A', 'Brasil', '2010-07-09'),
 ('98765432112345', 'Empresa B', 'Estados Unidos', '2002-08-22'),
-('45678976543120', 'Empresa C', 'MÈxico', '2006-02-04'),
-('45678976543122', 'Empresa D', 'Jap„o', '2016-04-04');
+('45678976543120', 'Empresa C', 'M√©xico', '2006-02-04'),
+('45678976543122', 'Empresa D', 'Jap√£o', '2016-04-04');
 
 INSERT INTO PrincipiosAtivos(Principio, Nome) VALUES
 ('123456', 'Paracetamol'),
@@ -269,20 +269,20 @@ SELECT f.CNPJ
 FROM Fornecedores f
 JOIN FornecedoresBloqueados fb ON fb.idFornecedor = f.idFornecedor;
 
---RelatÛrio de vendas por perÌodo
+--Relat√≥rio de vendas por per√≠odo
 SELECT *
 FROM VendasMedicamentos
 WHERE DataVenda BETWEEN '2025-11-01' AND '2025-11-10';
 
 
---RelatÛrio de medicamentos mais vendidos
+--Relat√≥rio de medicamentos mais vendidos
 SELECT m.Nome, SUM(iv.Quantidade) AS Quantidade
 FROM ItensVendas iv
 JOIN Medicamentos m ON iv.idMedicamento = m.idMedicamento
 GROUP BY m.Nome
 ORDER BY SUM(iv.Quantidade) DESC;
 
---RelatÛrio de compras por fornecedor
+--Relat√≥rio de compras por fornecedor
 SELECT c.idCompra, c.DataCompra,f.RazaoSocial
 FROM Compras c
 JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor;
@@ -307,7 +307,7 @@ BEGIN
 
     IF(@SITUACAO = 'I')
     BEGIN 
-        RAISERROR('Cliente inativo n„o pode realizar venda!', 16, 1);
+        RAISERROR('Cliente inativo n√£o pode realizar venda!', 16, 1);
         ROLLBACK TRANSACTION;
     END
 END;
@@ -327,7 +327,7 @@ BEGIN
         WHERE idCliente = @idCliente
         )
         BEGIN
-           RAISERROR('Cliente restrito n„o pode realizar venda!', 16, 1);
+           RAISERROR('Cliente restrito n√£o pode realizar venda!', 16, 1);
            ROLLBACK TRANSACTION;
         END
 END;
@@ -345,7 +345,7 @@ BEGIN
        WHERE f.Situacao = 'I'
    )
    BEGIN 
-        RAISERROR('Fornecedor inativo n„o pode vender!', 16, 1);
+        RAISERROR('Fornecedor inativo n√£o pode vender!', 16, 1);
         ROLLBACK TRANSACTION;
     END
 END;
@@ -363,7 +363,7 @@ BEGIN
         JOIN FornecedoresBloqueados fb ON fb.idFornecedor = c.idFornecedor
         )
         BEGIN
-           RAISERROR('Fornecedor bloqueado n„o pode vender!', 16, 1);
+           RAISERROR('Fornecedor bloqueado n√£o pode vender!', 16, 1);
            ROLLBACK TRANSACTION;
         END
 END;
@@ -383,7 +383,7 @@ BEGIN
         WHERE pa.Situacao = 'I'
     )
     BEGIN 
-        RAISERROR('N„o È possÌvel produzir remÈdio, o ingrediente est· inativo!', 16, 1)
+        RAISERROR('N√£o √© poss√≠vel produzir rem√©dio, o ingrediente est√° inativo!', 16, 1)
         ROLLBACK TRANSACTION;
     END
 END;
@@ -401,7 +401,7 @@ BEGIN
         WHERE m.Situacao = 'I'
     )
     BEGIN 
-        RAISERROR('N„o È possÌvel adicionar o medicamento a tabela de itens de vendas, pois est· inativo!', 16, 1)
+        RAISERROR('N√£o √© poss√≠vel adicionar o medicamento a tabela de itens de vendas, pois est√° inativo!', 16, 1)
         ROLLBACK TRANSACTION;
     END
 END;
@@ -412,7 +412,7 @@ ON Fornecedores
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -421,7 +421,7 @@ ON Compras
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -430,7 +430,7 @@ ON ItensCompras
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -439,7 +439,7 @@ ON PrincipiosAtivos
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -448,7 +448,7 @@ ON Producoes
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -458,7 +458,7 @@ ON ItensProducoes
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -467,7 +467,7 @@ ON Medicamentos
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -476,7 +476,7 @@ ON VendasMedicamentos
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -486,7 +486,7 @@ ON ItensVendas
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -496,7 +496,7 @@ ON Clientes
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -505,7 +505,7 @@ ON Telefones
 INSTEAD OF DELETE
 AS
 BEGIN
-    RAISERROR('N„o È permititido excluir registros dessa tabela!', 16, 1);
+    RAISERROR('N√£o √© permititido excluir registros dessa tabela!', 16, 1);
 END;
 GO
 
@@ -522,7 +522,7 @@ BEGIN
         HAVING COUNT (ic.idItemCompra) > 3
     )
     BEGIN 
-        RAISERROR ('N„o È possÌvel adicionar mais de 3 itens ‡ sua compra!', 16, 1)
+        RAISERROR ('N√£o √© poss√≠vel adicionar mais de 3 itens √† sua compra!', 16, 1)
         ROLLBACK TRANSACTION;
     END 
 END;
@@ -541,7 +541,7 @@ BEGIN
         HAVING COUNT(iv.idItemVenda) > 3
     )
     BEGIN 
-        RAISERROR ('N„o È possÌvel adicionar mais de 3 itens ‡ sua venda!', 16, 1)
+        RAISERROR ('N√£o √© poss√≠vel adicionar mais de 3 itens √† sua venda!', 16, 1)
         ROLLBACK TRANSACTION;
     END 
 END;
@@ -563,7 +563,7 @@ BEGIN
         )
     )
     BEGIN
-        RAISERROR('N„o È possÌvel vender medicamento n„o produzido ainda!', 16, 1);
+        RAISERROR('N√£o √© poss√≠vel vender medicamento n√£o produzido ainda!', 16, 1);
         ROLLBACK TRANSACTION;
     END
 END;
@@ -581,7 +581,7 @@ BEGIN
         WHERE c.DataNascimento > DATEADD(year, -18, vm.DataVenda)
     )
     BEGIN 
-        RAISERROR('Clientes menores de 18 anos n„o podem realizar compras de medicamentos!', 16, 1)
+        RAISERROR('Clientes menores de 18 anos n√£o podem realizar compras de medicamentos!', 16, 1)
         ROLLBACK TRANSACTION;
     END
 END;
@@ -599,7 +599,7 @@ BEGIN
         WHERE f.DataAbertura >= DATEADD(year, -2, c.DataCompra)
     )
     BEGIN 
-        RAISERROR('Fornecedores que est„o abertos a menos de 2 anos n„o podem realizar vendas!', 16, 1)
+        RAISERROR('Fornecedores que est√£o abertos a menos de 2 anos n√£o podem realizar vendas!', 16, 1)
         ROLLBACK TRANSACTION;
     END
 END;
@@ -612,21 +612,3 @@ CREATE TYPE TYPEItensCompra AS TABLE(
 );
 GO
 
-CREATE OR ALTER PROCEDURE sp_Compra
-@idFornecedor INT,
-@Itens TYPEItensCompra READONLY
-AS
-BEGIN
-    DECLARE @idCompra INT
-
-    INSERT INTO Compras(idFornecedor, DataCompra)
-    VALUES(@idFornecedor, GETDATE());
-
-    SET @idCompra = SCOPE_IDENTITY();
-
-    INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
-    SELECT @idCompra, Quantidade, ValorUnitario, idPrincipioAtivo
-    FROM @Itens;
-
-    END;
-    GO
