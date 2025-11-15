@@ -108,6 +108,7 @@ CREATE TABLE Telefones(
     Numero NVARCHAR(9)
 );
 
+
 ALTER TABLE Producoes
 ADD CONSTRAINT DF_Producoes
 DEFAULT GETDATE() for DataProducao
@@ -206,6 +207,7 @@ INSERT INTO ItensVendas(idMedicamento, Quantidade, idVenda) VALUES
 (1, 3, 1),
 (2, 4, 2),
 (3, 2, 1004);
+
 
 INSERT INTO ClientesRestritos(idCliente) 
 VALUES (3);
@@ -603,3 +605,28 @@ BEGIN
 END;
 GO
 
+CREATE TYPE TYPEItensCompra AS TABLE(
+    idPrincipioAtivo INT,
+    Quantidade INT, 
+    ValorUnitario DECIMAL
+);
+GO
+
+CREATE OR ALTER PROCEDURE sp_Compra
+@idFornecedor INT,
+@Itens TYPEItensCompra READONLY
+AS
+BEGIN
+    DECLARE @idCompra INT
+
+    INSERT INTO Compras(idFornecedor, DataCompra)
+    VALUES(@idFornecedor, GETDATE());
+
+    SET @idCompra = SCOPE_IDENTITY();
+
+    INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
+    SELECT @idCompra, Quantidade, ValorUnitario, idPrincipioAtivo
+    FROM @Itens;
+
+    END;
+    GO
