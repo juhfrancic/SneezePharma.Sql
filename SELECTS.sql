@@ -14,16 +14,17 @@ SELECT * FROM ItensVendas
 SELECT * FROM ClientesRestritos
 SELECT * FROM Telefones
 
-SELECT c.idCompra, ic.idItemCompra, ic.Quantidade, ic.ValorUnitario, (ic.Quantidade * ic.ValorUnitario) AS Total
+SELECT c.idCompra, ic.idItemCompra, pa.Nome, ic.Quantidade, ic.ValorUnitario, (ic.Quantidade * ic.ValorUnitario) AS Total
 FROM ItensCompras ic
-JOIN Compras c ON c.idCompra = ic.idCompra;
+JOIN Compras c ON c.idCompra = ic.idCompra
+JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ic.idPrincipioAtivo;
 
 SELECT p.idProducao, pa.Nome, ip.QuantidadePrincipios
 FROM ItensProducoes ip
 JOIN Producoes p ON p.idProducao = ip.idProducao
 JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ip.idPrincipioAtivo;
 
-SELECT vm.idVenda, c.Nome, c.CPF, c.Situacao, vm.DataVenda
+SELECT vm.idVenda, c.Nome AS NomeCliente, c.CPF, c.Situacao, vm.DataVenda
 FROM VendasMedicamentos vm
 JOIN Clientes c ON c.idCliente = vm.idCliente;
 

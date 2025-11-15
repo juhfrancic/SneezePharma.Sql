@@ -1,24 +1,65 @@
 USE SneezePharma;
 
-CREATE OR ALTER PROCEDURE sp_Compra
-@idFornecedor INT,
-@Itens TYPEItensCompra READONLY
+GO
+CREATE PROCEDURE sp_Compra
+    @idFornecedor INT,
+    @idPrincipioAtivo1 INT,
+    @Quantidade1 INT,
+    @ValorUnitario1 INT = NULL,
+    @idPrincipioAtivo2 INT = NULL,
+    @Quantidade2 INT = NULL,
+    @ValorUnitario2 INT = NULL,
+    @idPrincipioAtivo3 INT = NULL,
+    @Quantidade3 INT = NULL,
+    @ValorUnitario3 INT = NULL
 AS
 BEGIN
-    DECLARE @idCompra INT
+    DECLARE @idCompra INT;
+    DECLARE @ContadorItensCompra INT = 0;
+
+    BEGIN TRANSACTION;
+    BEGIN TRY
 
     INSERT INTO Compras(idFornecedor, DataCompra)
     VALUES(@idFornecedor, GETDATE());
 
     SET @idCompra = SCOPE_IDENTITY();
 
-    INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
-    SELECT @idCompra, Quantidade, ValorUnitario, idPrincipioAtivo
-    FROM @Itens;
+    
+        IF @idPrincipioAtivo1 IS NOT NULL AND @Quantidade1 > 0
+        BEGIN
+            INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
+            SELECT @idCompra, @Quantidade1, @ValorUnitario1, @idPrincipioAtivo1
+            SET @ContadorItensCompra = @ContadorItensCompra + 1;
+        END
 
-    END;
-    GO
+       IF @idPrincipioAtivo2 IS NOT NULL AND @Quantidade2 > 0
+        BEGIN
+            INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
+            SELECT @idCompra, @Quantidade2, @ValorUnitario2, @idPrincipioAtivo2
+            SET @ContadorItensCompra = @ContadorItensCompra + 1;
+        END
 
+        IF @idPrincipioAtivo3 IS NOT NULL AND @Quantidade3 > 0
+        BEGIN
+            INSERT INTO ItensCompras(idCompra, Quantidade, ValorUnitario, idPrincipioAtivo)
+            SELECT @idCompra, @Quantidade3, @ValorUnitario3, @idPrincipioAtivo3
+            SET @ContadorItensCompra = @ContadorItensCompra + 1;
+        END
+
+COMMIT TRANSACTION;
+
+    END TRY
+    BEGIN CATCH
+
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+        RETURN;
+    END CATCH
+END;
+GO
 
 CREATE PROCEDURE sp_CriarVenda
     @idCliente INT,
@@ -311,10 +352,99 @@ BEGIN
         QuantidadePrincipios = @QuantidadePrincipios
     WHERE idItemProducao = @idItemProducao;
 END;
+GO
 
+CREATE PROCEDURE sp_ListarItensCompras
+AS
+BEGIN
+    SELECT 
+        c.idCompra, 
+        ic.idItemCompra, 
+        pa.Nome, 
+        ic.Quantidade, 
+        ic.ValorUnitario, 
+        (ic.Quantidade * ic.ValorUnitario) AS Total
+        FROM ItensCompras ic
+        JOIN Compras c ON c.idCompra = ic.idCompra
+        JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ic.idPrincipioAtivo
+END;
+GO
 
+EXEC sp_ListarItensCompras;
+GO
 
+CREATE PROCEDURE sp_ListarProducaoPrincipio
+AS 
+BEGIN
+    SELECT p.idProducao, pa.Nome, ip.QuantidadePrincipios
+    FROM ItensProducoes ip
+    JOIN Producoes p ON p.idProducao = ip.idProducao
+    JOIN PrincipiosAtivos pa ON pa.idPrincipioAtivo = ip.idPrincipioAtivo;
+END;
+GO
+EXEC sp_ListarProducaoPrincipio;
+GO
 
+CREATE PROCEDURE sp_ListarVendaCliente
+AS 
+BEGIN
+    SELECT vm.idVenda, c.Nome AS NomeCliente, c.CPF, c.Situacao, vm.DataVenda
+    FROM VendasMedicamentos vm
+    JOIN Clientes c ON c.idCliente = vm.idCliente;
+END;
+GO
+EXEC sp_ListarVendaCliente;
+GO
 
+CREATE PROCEDURE sp_ListarClientesTelefones
+AS 
+BEGIN
+    SELECT c.Nome, t.DDD, t.Numero
+    FROM Clientes c 
+    RIGHT JOIN Telefones t ON t.idCliente = c.idCliente;
+END;
+EXEC sp_ListarClientesTelefones;
+GO
 
-    
+CREATE PROCEDURE sp_ListarVendas
+AS 
+BEGIN
+    SELECT vm.idVenda, m.Nome, iv.Quantidade, m.ValorVenda,(iv.Quantidade * m.ValorVenda) AS Total
+    FROM ItensVendas iv
+    JOIN VendasMedicamentos vm ON vm.idVenda = iv.idVenda
+    JOIN Medicamentos m ON m.idMedicamento = iv.idMedicamento;
+END;
+EXEC sp_ListarVendas;
+GO
+
+CREATE PROCEDURE sp_RelatorioVendasPorPeriodo
+AS 
+BEGIN
+    SELECT *
+    FROM VendasMedicamentos
+    WHERE DataVenda BETWEEN '2025-11-01' AND '2025-11-10';
+END;
+EXEC sp_RelatorioVendasPorPeriodo;
+GO
+  
+CREATE PROCEDURE sp_RelatorioMedicamentosMaisVendidos
+AS 
+BEGIN
+    SELECT m.Nome, SUM(iv.Quantidade) AS Quantidade
+    FROM ItensVendas iv
+    JOIN Medicamentos m ON iv.idMedicamento = m.idMedicamento
+    GROUP BY m.Nome
+    ORDER BY SUM(iv.Quantidade) DESC
+END;
+EXEC sp_RelatorioMedicamentosMaisVendidos;
+GO
+
+CREATE PROCEDURE sp_RelatorioDeComprasPorFornecedor
+AS 
+BEGIN
+    SELECT c.idCompra, c.DataCompra,f.RazaoSocial
+    FROM Compras c
+    JOIN Fornecedores f ON f.idFornecedor = c.idFornecedor
+END;
+EXEC sp_RelatorioDeComprasPorFornecedor;
+GO
